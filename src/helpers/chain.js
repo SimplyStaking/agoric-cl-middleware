@@ -623,8 +623,9 @@ export const pushPrice = async (price, feed, round, from) => {
         );
         
         logger.info(`Executing AGD for round ${round} for feed ${feed}.`)
+        let sequenceNum = sequence ? sequence["next_num"] : 1
         let response = await execSwingsetTransaction(
-          "wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld --offline --account-number=" + middlewareEnvInstance.ACCOUNT_NUMBER + " --sequence=" + sequence["next_num"],
+          "wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld --offline --account-number=" + middlewareEnvInstance.ACCOUNT_NUMBER + " --sequence=" + sequenceNum,
           //"wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld",
           networkConfig,
           from,
@@ -649,7 +650,7 @@ export const pushPrice = async (price, feed, round, from) => {
 
         } else {
           // Update sequence
-          logger.info(`Increment sequence to ${sequence["next_num"]+1}`)
+          logger.info(`Increment sequence to ${sequenceNum+1}`)
           await incrementSequence();
 
           // Update last submission time
@@ -664,10 +665,11 @@ export const pushPrice = async (price, feed, round, from) => {
         }
       }
       catch(error){
+        logger.info(`Failed while pushing price to round ${round} for feed ${feed} with err: ${error}`)
         // If tx failed to be included (timeout)
         if (String(error).includes("timed out waiting for tx to be included in a block")){
           // Update sequence
-          logger.info(`Increment sequence to ${sequence["next_num"]+1}`)
+          logger.info(`Increment sequence to ${sequenceNum+1}`)
           await incrementSequence();
         }
       }
