@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { URL } from "url";
 import { logger } from "./logger.js";
+import axios from "axios";
 
 /**
  * Function to read a json file
@@ -59,3 +60,29 @@ export const validUrl = (url) => {
   }
 };
 
+/**
+ * Function to get coingecko prices for provided ids
+ * @param {string[]} coingeckoIds list of coingecko ids
+ * @returns {object} response with prices for each id
+ */
+export const getCoingeckoPrices = async (coingeckoIds) => {
+  const ids = Object.values(coingeckoIds)
+      .filter(value => value !== undefined)
+      .join(', ');
+
+  const response = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=250&page=1&sparkline=false&locale=en&ids=${ids}`);
+
+  return response.data;
+};
+
+/**
+ * Function to check if enough minutes passed
+ * @param {number} timestamp timestamp to check
+ * @param {number} minutes number of minutes to check if passed
+ * @returns true if minutes passed from timestamp
+ */
+export const hasMinutesPassed = (timestamp, minutes) => {
+  minutes = minutes * 60 * 1000; // minutes in milliseconds
+  const currentTime = Date.now(); // Get the current time in milliseconds
+  return currentTime - timestamp >= minutes;
+}

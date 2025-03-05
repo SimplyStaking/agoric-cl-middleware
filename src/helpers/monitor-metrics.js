@@ -80,6 +80,13 @@ export class MonitorMetrics {
       labelNames: ["oracleName", "oracle", "feed"],
     });
 
+    // Create gauge for coingecko prices
+    this.coingeckoPrices = new Gauge({
+      name: "coingecko_price",
+      help: "Prices from coingecko",
+      labelNames: ["feed"],
+    });
+
     // Register the gauges
     this.register.registerMetric(this.oracleSubmission);
     this.register.registerMetric(this.oracleLastEpoch);
@@ -91,6 +98,7 @@ export class MonitorMetrics {
     this.register.registerMetric(this.heartbeatGauge);
     this.register.registerMetric(this.consensusTimeTaken);
     this.register.registerMetric(this.roundsCreated);
+    this.register.registerMetric(this.coingeckoPrices);
   }
 
   /**
@@ -155,4 +163,33 @@ export class MonitorMetrics {
   updateConsensusTimeTaken(feed, consensusTime) {
     this.consensusTimeTaken.labels(feed).set(consensusTime);
   }
+
+  /**
+   * Function to update coingecko prices
+   * @param {*} feed feed name to set metric for
+   * @param {*} price new price
+   */
+  updateCoingeckoPrices(feed, price) {
+    this.coingeckoPrices.labels(feed).set(price);
+  }
+
+  /**
+   * Function to get the current value of oracleSubmission for a network and oracle
+   * @param {string} oracle - The oracle address
+   * @param {string} feed - The feed name (e.g., ATOM-USD)
+   * @returns {number | null} - The current metric value or null if not found
+   */
+  async getOracleSubmissionMetricValue(oracle, feed) {
+    const metric = await this.oracleLastRound.get();
+    if (metric && metric.values) {
+      const matchingMetric = metric.values.find(
+        (entry) =>
+          entry.labels.oracle === oracle &&
+          entry.labels.feed === feed
+      );
+      return matchingMetric ? matchingMetric.value : null;
+    }
+    return null;
+  }
 }
+
