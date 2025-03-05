@@ -18,20 +18,7 @@ export const rpcUrl = agoricNetSubdomain =>
  * @typedef {{ rpcAddrs: string[], chainName: string }} MinimalNetworkConfig
  */
 
-/**
- *  @param {string} str
- * @returns {Promise<MinimalNetworkConfig>}
- */
-const fromAgoricNet = str => {
-  const [netName, chainName] = str.split(',');
-  if (chainName) {
-    return Promise.resolve({ chainName, rpcAddrs: [rpcUrl(netName)] });
-  }
-  return fetch(networkConfigUrl(netName)).then(res => res.json());
-};
-
 /** @type {MinimalNetworkConfig} */
-// console.warn('networkConfig', networkConfig);
 
 /**
  *
