@@ -8,6 +8,7 @@ import { MonitoringState } from "../helpers/monitoring-state.js";
 import monitorEnvInstance from "../helpers/monitor-env.js";
 import { FeedsConfig } from "../helpers/feeds-config.js";
 import { delay, getCoingeckoPrices, hasMinutesPassed } from "../helpers/utils.js";
+import { updateRPC } from "../lib/rpc.js";
 
 let metrics = new MonitorMetrics();
 let oracleConfig = new OracleMonitorConfig(monitorEnvInstance.ORACLE_FILE);
@@ -57,6 +58,9 @@ const getPrices = async () => {
  * Main function to monitor
  */
 export const monitor = async () => {
+  // Update RPC
+  await updateRPC(monitorEnvInstance.AGORIC_RPC)
+
   // Holds last round details
   let lastRound = {};
   await getPrices()

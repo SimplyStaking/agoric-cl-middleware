@@ -1,4 +1,4 @@
-export const networkConfig = { rpcAddrs: [process.env.AGORIC_RPC || 'http://127.0.0.1:26657'], chainName: process.env.AGORIC_NET };
+export let networkConfig = { rpcAddrs: [process.env.AGORIC_RPC || 'http://127.0.0.1:26657'], chainName: process.env.AGORIC_NET || "agoric-3" };
 /* eslint-disable @jessie.js/no-nested-await */
 /* global Buffer, fetch, process */
 
@@ -222,3 +222,24 @@ export const makeRpcUtils = async ({ fetch }) => {
 
   return { vstorage, fromBoard, agoricNames };
 };
+
+/**
+ * Function to update the rpc
+ * @param {*} rpcUrl the url to the rpc
+ */
+export const updateRPC = async (rpcUrl) => {
+  networkConfig.rpcUrl = rpcUrl;
+
+  try {
+    const response = await axios.get(`${rpcUrl}/status`);
+    const network = response.result.node_info.network;
+
+    if (!network) {
+      throw new Error("Network could not be obtained from the RPC");
+    }
+    networkConfig.chainName = network
+    logger.debug(`Setting rpc to ${rpcUrl} on ${network}`)
+  } catch (error) {
+    logger.error(`Failed updating RPC: ${error}`);
+  }
+}

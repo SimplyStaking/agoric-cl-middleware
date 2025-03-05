@@ -803,7 +803,6 @@ This class contains the following properties
 
 * this.MONITOR_PORT - The port on which the monitor will serve metrics
 * this.MONITOR_POLL_INTERVAL - The interval in seconds which needs to pass between each price and round check
-* this.AGORIC_NET - Agoric's chain
 * this.AGORIC_RPC - The Agoric node's RPC
 * this.MONITOR_STATE_FILE -  The path to the monitoring state's file
 * this.ORACLE_FILE - The path to the file containing the oracles to monitor 
@@ -1295,7 +1294,6 @@ This script makes use of the following environment variables and it requires the
 |---------------	|-----------------------------------------------------------------------------------	|----------------------------	|
 | MONITOR_PORT          	| The port on which the monitor will serve metrics                                  	| 3001                       	|
 | MONITOR_POLL_INTERVAL 	| The interval in seconds which needs to pass between<br>each price and round check 	| 10                         	|
-| AGORIC_NET    	| Agoric's chain ID                                                                 	| N/A                        	|
 | AGORIC_RPC    	| The Agoric's node RPC endpoint                                                    	| http://0.0.0.0:26657       	|
 | MONITOR_STATE_FILE    	| The path to the monitoring state's file                                           	| data/monitoring_state.json 	|
 | ORACLE_FILE   	| The path to the file containing the oracles to monitor                            	| config/oracles.json        	|
