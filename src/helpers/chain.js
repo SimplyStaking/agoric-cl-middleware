@@ -19,7 +19,7 @@ import {
   delay
 } from "./utils.js";
 import { checkIfInSubmission } from "./middleware-helper.js"
-import { getNextSequence, incrementSequence, setSequenceNumber, updateTable, queryTable } from "./db.js";
+import { updateTable, queryTable } from "./db.js";
 import middlewareEnvInstance from './middleware-env.js';
 import { logger } from "./logger.js";
 import { RoundDetails } from "./round-details.js";
@@ -31,6 +31,12 @@ const marshaller = boardSlottingMarshaller();
 let feedsConfig = new FeedsConfig();
 
 let MAX_OFFERS_TO_LOOP = 25;
+
+// Holds the account state
+export let account = {
+  accountNumber: 0,
+  sequence: 0,
+}
 
 /**
  * Function to get the latest block height and whether the node is syncing
@@ -174,7 +180,7 @@ export const submissionAlreadyErrored = async (round, feed) => {
 
     count++;
 
-    if (count > MAX_OFFERS_TO_LOOP){
+    if (count > MAX_OFFERS_TO_LOOP) {
       break
     }
 
@@ -183,9 +189,9 @@ export const submissionAlreadyErrored = async (round, feed) => {
       // Get id
       let id = followerElement.value.status.invitationSpec.previousOffer;
       let roundId = followerElement.value.status.invitationSpec.invitationArgs[0]["roundId"]
-       
+
       // Break if round smaller
-      if(id == feedOfferId && roundId < round){
+      if (id == feedOfferId && roundId < round) {
         break
       }
       // If previous offer matches
@@ -227,7 +233,7 @@ export const submissionAlreadyErrored = async (round, feed) => {
 export const getLatestSubmittedRound = async (oracle, feedOfferId) => {
   let fromBoard = makeFromBoard();
   const unserializer = boardSlottingMarshaller(fromBoard.convertSlotToVal);
-  const leader = makeLeader(networkConfig.rpcAddrs[0], {retryCallback: null, jitter: null});
+  const leader = makeLeader(networkConfig.rpcAddrs[0], { retryCallback: null, jitter: null });
 
   const follower = await makeFollower(`:published.wallet.${oracle}`, leader, {
     unserializer,
@@ -257,7 +263,7 @@ export const getLatestSubmittedRound = async (oracle, feedOfferId) => {
 export const checkSubmissionForRound = async (oracle, feedOfferId, roundId) => {
   let fromBoard = makeFromBoard();
   const unserializer = boardSlottingMarshaller(fromBoard.convertSlotToVal);
-  const leader = makeLeader(networkConfig.rpcAddrs[0], {retryCallback: null, jitter: null});
+  const leader = makeLeader(networkConfig.rpcAddrs[0], { retryCallback: null, jitter: null });
 
   const follower = await makeFollower(`:published.wallet.${oracle}`, leader, {
     unserializer,
@@ -275,7 +281,7 @@ export const checkSubmissionForRound = async (oracle, feedOfferId, roundId) => {
     // If a price invitation and for the correct feed
     let invitationType = currentOffer["status"]["invitationSpec"][
       "invitationMakerName"];
-      
+
     let previousOffer = currentOffer["status"]["invitationSpec"][
       "previousOffer"];
 
@@ -362,21 +368,21 @@ export const getOraclesInvitations = async (oracle) => {
     let invitationId = liveOffers[inv][0]
     let invitationDetails = liveOffers[inv][1]
     //if there is a value
-    if(invitationDetails.invitationSpec.hasOwnProperty("instance")){
+    if (invitationDetails.invitationSpec.hasOwnProperty("instance")) {
       let boardId = invitationDetails.invitationSpec.instance.boardId;
-      if(feedBoards[boardId]){
+      if (feedBoards[boardId]) {
         logger.info(`Splitting ${feedBoards[boardId]} on price feed`)
         let feed = feedBoards[boardId].split(" price feed")[0];
 
-        if(feed in feedsConfig.feeds){
+        if (feed in feedsConfig.feeds) {
           feedInvs[feed] = invitationId;
         }
-  
+
       }
     }
 
     count++;
-    if (count >= MAX_OFFERS_TO_LOOP){
+    if (count >= MAX_OFFERS_TO_LOOP) {
       break
     }
   }
@@ -387,21 +393,21 @@ export const getOraclesInvitations = async (oracle) => {
     let invitationId = invitations[inv][0]
     let invitationDetails = invitations[inv][1]
     //if there is a value
-    if(invitationDetails.value && invitationDetails.value.length > 0){
+    if (invitationDetails.value && invitationDetails.value.length > 0) {
       let boardId = invitationDetails.value[0].instance.getBoardId();
-      if(feedBoards[boardId]){
+      if (feedBoards[boardId]) {
         let feed = feedBoards[boardId].split(" price feed")[0];
-  
+
         let invDate = invitationId.split("oracleAccept-")[1]
 
-        if(feed in feedsConfig.feeds){
-          if(feedInvs[feed]){
+        if (feed in feedsConfig.feeds) {
+          if (feedInvs[feed]) {
             let currentDate = feedInvs[feed].split("oracleAccept-")[1]
-            if (Number(invDate) > Number(currentDate)){
+            if (Number(invDate) > Number(currentDate)) {
               feedInvs[feed] = invitationId;
             }
           }
-          else{
+          else {
             feedInvs[feed] = invitationId;
           }
         }
@@ -409,7 +415,7 @@ export const getOraclesInvitations = async (oracle) => {
     }
 
     count++;
-    if (count >= MAX_OFFERS_TO_LOOP){
+    if (count >= MAX_OFFERS_TO_LOOP) {
       break
     }
   }
@@ -445,7 +451,7 @@ export const queryRound = async (feed, oracle, checkSubmission) => {
 
   let submissionForRound = false
   let query = await queryTable("rounds", ["roundId", "submissionMade", "errored"], feed);
-  if(checkSubmission){
+  if (checkSubmission) {
     // Get offers
     let offers = await getOraclesInvitations(oracle);
 
@@ -469,7 +475,7 @@ export const queryRound = async (feed, oracle, checkSubmission) => {
     submissionForRound = submissionForRound || (query.roundId == round && query.submissionMade == 1)
   }
 
-  
+
   // Get the latest round
   let latestRound = new RoundDetails(
     round,
@@ -479,9 +485,9 @@ export const queryRound = async (feed, oracle, checkSubmission) => {
     (query && query.roundId == round && query.errored == 1)
   );
 
-  if(checkSubmission){
+  if (checkSubmission) {
     logger.info(`${feed} Latest Round: ${latestRound.roundId}. Submitted: ${submissionForRound}`);
-  } else{
+  } else {
     logger.info(`${feed} Latest Round: ${latestRound.roundId}`);
   }
 
@@ -551,7 +557,7 @@ export const pushPrice = async (price, feed, round, from) => {
     let latestRound = await queryRound(feed, from, true);
 
     // Check if failed
-    if(latestRound.startedAt == 0 && latestRound.submissionMade){
+    if (latestRound.startedAt == 0 && latestRound.submissionMade) {
       logger.info(`Aborting submission to round ${round} for feed ${feed} due to failed round query`)
       continue;
     }
@@ -572,7 +578,7 @@ export const pushPrice = async (price, feed, round, from) => {
 
     logger.info(`Submitting price for round ${round} for feed ${feed} attempt ${i + 1}`);
 
-    let offer = {...templateOffer};
+    let offer = { ...templateOffer };
     offer.id = Number(Date.now());
 
     // Output action
@@ -582,7 +588,7 @@ export const pushPrice = async (price, feed, round, from) => {
     });
 
     // Get latest sequence number
-    let sequence = await getNextSequence();
+    let sequenceNum = account.sequence
 
     // Get last submission block
     const query = await queryTable("jobs", ["last_submitted_block", "last_tried_round"], feed);
@@ -608,24 +614,23 @@ export const pushPrice = async (price, feed, round, from) => {
      */
     let sameRoundEnoughBlocksPassed = latestHeight > allowedSubmissionHeight && sameRound
     let newRoundEnoughBlocksPassed = newRound && latestHeight > lastSubmissionBlock
-    let retriggeredInvitation =  (latestHeight > allowedSubmissionHeight && round < lastTriedRound && (latestRound.roundId == round || latestRound.roundId == 0 || round == 1))
+    let retriggeredInvitation = (latestHeight > allowedSubmissionHeight && round < lastTriedRound && (latestRound.roundId == round || latestRound.roundId == 0 || round == 1))
     logger.info(`Final check when submitting for round ${round} for feed ${feed}. sameRoundEnoughBlocksPassed -> ${sameRoundEnoughBlocksPassed}, newRoundEnoughBlocksPassed -> ${newRoundEnoughBlocksPassed}, retriggeredInvitation -> ${retriggeredInvitation}, rpcStillSyncing -> ${rpcStillSyncing}`)
-    if ((sameRoundEnoughBlocksPassed || newRoundEnoughBlocksPassed || retriggeredInvitation) && !rpcStillSyncing){
+    if ((sameRoundEnoughBlocksPassed || newRoundEnoughBlocksPassed || retriggeredInvitation) && !rpcStillSyncing) {
       // Execute
-      try{
+      try {
         // Update last submitted block height
         await updateTable(
           "jobs",
-          { 
+          {
             last_submitted_block: latestHeight,
           },
           feed
         );
-        
+
         logger.info(`Executing AGD for round ${round} for feed ${feed}.`)
-        let sequenceNum = sequence ? sequence["next_num"] : 1
         let response = await execSwingsetTransaction(
-          "wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld --offline --account-number=" + middlewareEnvInstance.ACCOUNT_NUMBER + " --sequence=" + sequenceNum,
+          "wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld --offline --account-number=" + account.accountNumber + " --sequence=" + sequenceNum,
           //"wallet-action --allow-spend '" + JSON.stringify(data) + "' --gas-prices=0.01ubld",
           networkConfig,
           from,
@@ -633,30 +638,30 @@ export const pushPrice = async (price, feed, round, from) => {
           keyring
         );
 
-        logger.info("Response: "+JSON.stringify(response))
+        logger.info("Response: " + JSON.stringify(response))
 
         // If transaction failed
-        if(response["code"] != 0){
+        if (response["code"] != 0) {
           // Get raw log
           let rawLog = response["raw_log"];
           // If error contains sequence mismatch
-          if (rawLog.includes("incorrect account sequence")){
+          if (rawLog.includes("incorrect account sequence")) {
             // setSequence
             const regex = /\d+/g;
             const numbers = rawLog.match(regex);
             logger.info(`Setting sequence to ${numbers[0]}`)
-            await setSequenceNumber(numbers[0])
+            account.sequence = numbers[0]
           }
 
         } else {
           // Update sequence
-          logger.info(`Increment sequence to ${sequenceNum+1}`)
-          await incrementSequence();
+          logger.debug(`Increment sequence to ${sequenceNum + 1}`)
+          account.sequence = account.sequence+1;
 
           // Update last submission time
           await updateTable(
             "jobs",
-            { 
+            {
               last_submission_time: Date.now() / 1000,
               last_tried_round: round
             },
@@ -664,12 +669,12 @@ export const pushPrice = async (price, feed, round, from) => {
           );
         }
       }
-      catch(error){
+      catch (error) {
         logger.info(`Failed while pushing price to round ${round} for feed ${feed} with err: ${error}`)
         // If tx failed to be included (timeout)
-        if (String(error).includes("timed out waiting for tx to be included in a block")){
+        if (String(error).includes("timed out waiting for tx to be included in a block")) {
           // Update sequence
-          logger.info(`Increment sequence to ${sequenceNum+1}`)
+          logger.info(`Increment sequence to ${sequenceNum + 1}`)
           await incrementSequence();
         }
       }
@@ -679,10 +684,10 @@ export const pushPrice = async (price, feed, round, from) => {
       rpcStillSyncing = rpcState.syncing
       logger.info(`RPC Latest block height ${latestHeight}, still syncing -> ${rpcStillSyncing}`);
     }
-    else{
+    else {
       logger.info(`Already submitted to round in block ${latestHeight} for feed ${feed}`);
 
-      if(rpcStillSyncing){
+      if (rpcStillSyncing) {
         logger.info(`RPC is out of sync, will not be submitting for feed ${feed}`)
       }
     }
@@ -809,7 +814,7 @@ export const getOracleLatestInfo = async (
           currentOffer["status"]["invitationSpec"]["invitationArgs"][0]["roundId"]
         );
 
-        if(feed){
+        if (feed) {
 
           // Get feeds' last observed round from state
           let lastObservedRound = state["values"].hasOwnProperty(feed) && state["values"][feed].hasOwnProperty("round")
@@ -821,35 +826,35 @@ export const getOracleLatestInfo = async (
           // If round is bigger than last observed and the offer didn't fail
           if (
             (lastRound > lastObservedRound ||
-            lastRound > lastOracleMetricValue) &&
+              lastRound > lastOracleMetricValue) &&
             !currentOffer["status"].hasOwnProperty("error")
           ) {
             // If id is bigger than last offer id in state, set it
             lastResults["last_index"] = id;
             lastOfferId = id;
-  
+
             // Get latest round
             let latestRound = await queryRound(feed, oracle, false);
-  
+
             // Get current rounds created
             let roundsCreated =
               state["values"].hasOwnProperty(feed) &&
                 state["values"][feed].hasOwnProperty("rounds_created")
                 ? state["values"][feed]["rounds_created"]
                 : 0;
-  
+
             // If oracle is the new round's creator, increment rounds created
             if (latestRound.startedBy == oracle) {
               roundsCreated++;
             }
-  
+
             let price =
               Number(
                 currentOffer["status"]["invitationSpec"]["invitationArgs"][0][
                 "unitPrice"
                 ]
               ) / amountsIn[feed];
-  
+
             // Fill results variable
             lastResults["values"][feed] = {
               price: price,
@@ -858,12 +863,12 @@ export const getOracleLatestInfo = async (
               rounds_created: roundsCreated
             };
             state = lastResults;
-  
+
             // Get latest feed price
             let feedPrice = await queryPrice(feed);
-  
+
             logger.info(`Updating metrics for ${oracleDetails["oracleName"]} for ${feed} @ round ${lastRound}`);
-  
+
             // Update metrics
             metrics.updateMetrics(
               oracleDetails["oracleName"],
@@ -878,7 +883,7 @@ export const getOracleLatestInfo = async (
           }
         }
 
-        
+
       }
     }
   }
@@ -903,4 +908,30 @@ export const getOracleLatestInfo = async (
   }
 
   return lastResults["last_index"] !== lastOfferId ? lastResults : state;
+};
+
+/**
+ * Fetches account details from the specified endpoint and extracts
+ * the account number and sequence.
+ * 
+ * @returns An object containing the account number and sequence
+ * @throws An error if the request fails or the response format is invalid
+ */
+export const getAccountDetails = async () => {
+  try {
+    const response = await axios.get(`${middlewareEnvInstance.AGORIC_LCD}/cosmos/auth/v1beta1/accounts/${middlewareEnvInstance.FROM}`);
+    const accountDetails = response.data.account;
+
+    if (!accountDetails || !accountDetails.account_number || !accountDetails.sequence) {
+      throw new Error("Invalid response format when getting Agoric watcher account: missing account_number or sequence.");
+    }
+    account = {
+      accountNumber: Number(accountDetails.account_number),
+      sequence: Number(accountDetails.sequence),
+    };
+    logger.debug(`Setting account details to ${JSON.stringify(account)}`)
+  } catch (error) {
+    console.error("Error fetching Agoric account details:", error);
+    process.exit(1)
+  }
 };

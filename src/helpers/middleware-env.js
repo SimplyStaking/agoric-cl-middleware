@@ -6,8 +6,8 @@ class MiddlewareENV {
     const {
       MIDDLEWARE_PORT = "3000",
       AGORIC_RPC = "http://0.0.0.0:26657",
+      AGORIC_LCD = "http://0.0.0.0:1317",
       FROM,
-      ACCOUNT_NUMBER,
       SUBMIT_RETRIES = "3",
       SEND_CHECK_INTERVAL = "45",
       BLOCK_INTERVAL = "6",
@@ -19,8 +19,8 @@ class MiddlewareENV {
 
     this.MIDDLEWARE_PORT = MIDDLEWARE_PORT;
     this.AGORIC_RPC = AGORIC_RPC;
+    this.AGORIC_LCD = AGORIC_LCD;
     this.FROM = FROM;
-    this.ACCOUNT_NUMBER = ACCOUNT_NUMBER;
     this.SUBMIT_RETRIES = SUBMIT_RETRIES;
     this.SEND_CHECK_INTERVAL = SEND_CHECK_INTERVAL;
     this.BLOCK_INTERVAL = BLOCK_INTERVAL;
@@ -49,10 +49,6 @@ class MiddlewareENV {
       !isNaN(Number(this.BLOCK_INTERVAL)),
       "$BLOCK_INTERVAL should be a valid number"
     );
-    assert(
-      !isNaN(Number(this.ACCOUNT_NUMBER)),
-      "$ACCOUNT_NUMBER should be a valid number"
-    );
     assert(this.FROM && this.FROM !== "", "$FROM is required");
     assert(validUrl(this.EI_CHAINLINKURL), "$EI_CHAINLINKURL is required");
     assert(
@@ -75,6 +71,8 @@ try {
   if (process.env.NODE_ENV !== "test" && process.env.SERVICE !== "monitor") {
     logger.error("ERROR LOADING ENV VARS: " + err);
     process.exit(1);
+  } else {
+    logger.error("ERROR LOADING ENV VARS: " + err);
   }
 }
 

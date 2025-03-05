@@ -5,6 +5,7 @@ import { startBridge } from './bridge.js'
 import { makeController } from './controller.js'
 import middlewareEnvInstance from '../helpers/middleware-env.js';
 import { logger } from '../helpers/logger.js';
+import { getAccountDetails } from '../helpers/chain.js';
 
 /**
   * This is the function which runs the middleware
@@ -14,6 +15,7 @@ export const middleware = async () => {
 
   // Init
   await initialiseState()
+  await getAccountDetails()
 
   // Start the bridge
   startBridge(middlewareEnvInstance.MIDDLEWARE_PORT);
