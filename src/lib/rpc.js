@@ -4,6 +4,7 @@ export let networkConfig = { rpcAddrs: [process.env.AGORIC_RPC || 'http://127.0.
 
 import { makeMarshal } from '@endo/marshal';
 import { Far } from '@endo/far';
+import { logger } from '../helpers/logger';
 
 /**
  * @typedef {{boardId: string, iface: string}} RpcRemote
