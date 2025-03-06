@@ -4,7 +4,7 @@ export let networkConfig = { rpcAddrs: [process.env.AGORIC_RPC || 'http://127.0.
 
 import { makeMarshal } from '@endo/marshal';
 import { Far } from '@endo/far';
-import { logger } from '../helpers/logger';
+import axios from "axios";
 
 /**
  * @typedef {{boardId: string, iface: string}} RpcRemote
@@ -233,14 +233,14 @@ export const updateRPC = async (rpcUrl) => {
 
   try {
     const response = await axios.get(`${rpcUrl}/status`);
-    const network = response.result.node_info.network;
+    const network = response.data.result.node_info.network;
 
     if (!network) {
       throw new Error("Network could not be obtained from the RPC");
     }
     networkConfig.chainName = network
-    logger.debug(`Setting rpc to ${rpcUrl} on ${network}`)
+    console.log(`Setting rpc to ${rpcUrl} on ${network}`)
   } catch (error) {
-    logger.error(`Failed updating RPC: ${error}`);
+    console.log(`Failed updating RPC: ${error}`);
   }
 }
